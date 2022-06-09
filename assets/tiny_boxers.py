@@ -1,7 +1,7 @@
 import logging
 import logging.config
 
-from assets.boxer import boxer
+from classes.boxer import boxer
 
 logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('root')
