@@ -2,7 +2,7 @@ import logging
 
 logger = logging.getLogger('boxer')
 
-class boxer:
+class Boxer:
 
     def __init__(self, id: int, position: int, board_size: int):
         self.id = id
