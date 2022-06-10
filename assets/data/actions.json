@@ -1,0 +1,11 @@
+{
+    "footwork": {
+        "move": 1
+    },
+    "jab": 1,
+    "cross": 1,
+    "hook": 1,
+    "uppercut": 1,
+    "guard": 1,
+    "counter": 1
+}
