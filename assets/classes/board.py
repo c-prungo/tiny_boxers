@@ -4,47 +4,46 @@ from re import split
 from typing import List
 from pprint import pprint
 
-# NOTE: Full imports
+# NOTE: Full external imports
 import logging
 
 # NOTE: Custom imports
+from classes.matrix import BoardMatrix
 from classes.boxer import Boxer
-from utils.typing_utils import Matrix, Position, Direction
+from classes.position import Position, Direction
 from utils.matrix_utils import banner
 
 logger = logging.Logger('boxer', level=logging.DEBUG)
-
-with open('assets/data/tiles.json') as json_file:
-    tiles = load(json_file)
 
 class Board:
 
     def __init__(self, board_str: str):
 
-        self.board = bsn_to_board(board_str)
+        self.board = BoardMatrix(board_str)
         self.boxers: List[Boxer] = []
 
-    @banner # not necessary, adds border to string
+    @banner
     def __str__(self):
 
-        matrix = [ [ str(m['tile']) for m in row ] for row in self.board ]
+        grid = self.board.get_literal()
+
         for i, boxer in enumerate(self.boxers):
-            matrix[boxer.y()][boxer.x()] = str(i)
+            grid[boxer.pos] = str(i)
 
-        return '\n'.join(
-            [ '  '.join([ m for m in row ]) for row in matrix ]
-        )
+        return str(grid)
 
-    def add_boxer(self, pos: Position):
+    def add_boxer(self, *positions: Position):
         """add a new boxer to the board, fails if the position is taken"""
 
-        new_boxer = Boxer(pos=pos)
+        for pos in positions:
 
-        # check if boxers share a position
-        for boxer in self.boxers:
-            if boxer == new_boxer: return
+            new_boxer = Boxer(pos=pos)
 
-        if self.is_legal_pos(pos): self.boxers.append(new_boxer)
+            # check if boxers share a position
+            for boxer in self.boxers:
+                if boxer == new_boxer: return
+
+            if self.is_legal_pos(pos): self.boxers.append(new_boxer)
 
     def is_boxer(self, idx: int) -> bool:
         """check if a given id is a valid boxer"""
@@ -57,65 +56,36 @@ class Board:
         if not self.is_boxer(idx): return
 
         for dir in dirs:
-            new_pos = self.boxers[idx].get_move(dir)
+            new_pos = self.boxers[idx].get_relative_pos(dir)
             if self.is_legal_pos(new_pos):
                 self.boxers[idx].move(new_pos)
 
+    def attack(self, pos: Position):
+        for boxer in self.boxers:
+            if boxer.pos == pos: boxer.damage()
+
     def is_legal_pos(self, pos: Position) -> bool:
         """check if a position exists on the board"""
+        if (self.is_within_board(pos)
+        and self.is_tile(pos, 'f')): return True
+        return False
 
-        try:
-            return bool(
-                pos[0] >= 0 and pos[1] >= 0
-                and self.board[pos[1]][pos[0]]['tile'] == "f"
-            )
-        except Exception:
+    def is_within_board(self, pos: Position) -> bool:
+        """check if a position exists within the bounds of the board"""
+
+        # guard: check that the position exists in the matrix
+        try: self.board[pos]
+        except Exception as e:
+            logger.debug('Failed is_within_board guard check: ' + str(e))
             return False
 
-def bsn_to_board(board_str: str) -> Matrix:
-    """convert from board string notation (bsn) to a usable board matrix"""
-    num_string = "1234567890"
+        # check the position isn't negative
+        return bool(pos.x >= 0 and pos.y >= 0)
 
-    try:
-        parts = split(r'(\d+)', board_str)[1::]
-    except Exception:
-        logger.exception('Failed to parse board string...')
-        raise
-
-    matrix = []
-    row = []
-    num = 1
-    for part in parts:
-
-        # isolated event:
-        if part[0] in num_string:
-            num = max(num, int(part))
-            continue
-        # split -> only ints or str
-        # can safely continue
-
-        end = False
-        tile_dict = {
-            'tile': None
-        }
-        for l in part:
-            if l == '|': end = True
-            if l in tiles: tile_dict['tile'] = l
-        row.extend([tile_dict for _ in range(num)])
-        num = 1
-        
-        if end:
-            matrix.append(row)
-            row = []
-    matrix.append(row)
-
-    width = max(*[len(row) for row in matrix])
-
-    tile_dict = {
-        'tile': 'w'
-    }
-    for i, row in enumerate(matrix):
-        diff = width-len(row)
-        matrix[i].extend([tile_dict for _ in range(diff)])
-
-    return matrix
+    def is_tile(self, pos: Position, *tiles: str) -> bool:
+        """check if the floor tile at a given position is within a certain set of tiles"""
+        try:
+            return bool(self.board[pos]['tile'] in tiles)
+        except Exception as e:
+            logger.debug('Failed is_tile check: ' + str(e))
+            return False
