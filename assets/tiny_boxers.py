@@ -9,11 +9,10 @@ logger = logging.getLogger('root')
 
 def main():
 
-    board = Board(board_str=r'4f1w|1w4f|3f2w|5f')
+    board = Board(board_str=r'3f|3f|3f')
     print(board)
-    board.add_boxer((2,1))
-    board.add_boxer((0,1))
-    board.add_boxer((3,3))
+    board.add_boxer((1,0))
+    board.add_boxer((1,2))
     print(board)
     board.move_boxer(0, Direction.UP, Direction.LEFT, Direction.LEFT, Direction.LEFT)
     print(board)
