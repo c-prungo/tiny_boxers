@@ -1,10 +1,10 @@
 # NOTE: External imports
 from re import split
 from json import load
+from typing import overload, List
 
 # NOTE: Full external imports
 import logging
-from turtle import position
 
 # NOTE: Custom imports
 from classes.position import Position
@@ -21,11 +21,22 @@ class Matrix:
 
         self.grid = bsn_to_matrix(bsn)
 
-    def __getitem__(self, pos: Position | int) -> str | Tile:
+    @overload
+    def __getitem__(self, idx: Position) -> str | Tile:
+        """get the element at a given position"""
+        ...
+
+    @overload
+    def __getitem__(self, idx: int) -> List[str | Tile]:
+        """get the row at a given index"""
+        ...
+
+    def __getitem__(self, idx):
+        
+        if type(idx) == int: return self.grid[idx]
 
         # invert x y positions from standard notation
-        if type(pos) == Position: return self.grid[pos.y][pos.x]
-        if type(pos) == int: return self.grid[position]
+        if type(idx) == Position: return self.grid[idx.y][idx.x]
 
     @staticmethod
     def stringify(func):
@@ -39,9 +50,9 @@ class Matrix:
 
 class LiteralMatrix(Matrix):
 
-    def __init__(self, matrix: Matrix, idx: str='tile'):
+    def __init__(self, grid: Grid, idx: str='tile'):
 
-        self.grid = [ [ str(m[idx]) for m in row ] for row in matrix ]
+        self.grid = [ [ str(m[idx]) for m in row ] for row in grid ]
 
     @Matrix.stringify
     def __str__(self) -> str:

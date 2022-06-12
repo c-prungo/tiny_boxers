@@ -1,4 +1,5 @@
 # NOTE: External imports
+from hashlib import new
 from json import load
 from re import split
 from typing import List
@@ -37,13 +38,14 @@ class Board:
 
         for pos in positions:
 
-            new_boxer = Boxer(pos=pos)
+            new_boxer = Boxer(pos)
 
             # check if boxers share a position
             for boxer in self.boxers:
                 if boxer == new_boxer: return
 
-            if self.is_legal_pos(pos): self.boxers.append(new_boxer)
+            if self.is_legal_pos(pos):
+                self.boxers.append(new_boxer)
 
     def is_boxer(self, idx: int) -> bool:
         """check if a given id is a valid boxer"""
