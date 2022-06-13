@@ -8,7 +8,8 @@ import logging
 
 # NOTE: Custom imports
 from classes.position import Position
-from utils.typing_utils import Tile, Row, Grid, LiteralRow
+from utils.typing_utils import Tile, Grid
+from utils.matrix_utils import banner
 
 logger = logging.Logger('boxer', level=logging.DEBUG)
 
@@ -55,8 +56,12 @@ class LiteralMatrix(Matrix):
         self.grid = [ [ str(m[idx]) for m in row ] for row in grid ]
 
     @Matrix.stringify
-    def __str__(self) -> str:
+    def get_board_string(self):
         return self.grid
+
+    @banner
+    def __str__(self) -> str:
+        return self.get_board_string()
 
     def __setitem__(self, pos: Position, value: str):
 
@@ -69,9 +74,12 @@ class BoardMatrix(Matrix):
         return LiteralMatrix(self.grid, idx)
 
     @Matrix.stringify
-    def __str__(self, idx: str='tile'):
-
+    def get_board_string(self, idx: str='tile'):
         return self.get_literal(self.grid, idx)
+
+    @banner
+    def __str__(self, idx: str='tile'):
+        return self.get_board_string(self.grid, idx)
 
 def bsn_to_matrix(bsn: str) -> Grid:
     """convert from board string notation (bsn) to a usable board matrix"""
