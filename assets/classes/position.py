@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import List
 
 class Position:
 
@@ -53,3 +54,22 @@ class Direction(Enum) :
     UPRIGHT = Position(1, -1)
     DOWNLEFT = Position(-1, 1)
     DOWNRIGHT = Position(1, 1)
+
+def get_legal_dirs(directions: List[str | int]) -> List[Direction]:
+    parsed_directions = parse_directions(directions)
+
+    legal_directions = []
+    for i, direction in enumerate(Direction):
+        if i in parsed_directions:
+            legal_directions.append(direction)
+
+    return legal_directions
+
+def parse_directions(directions: List[str | int]) -> List[int]:
+    parsed_directions = []
+    for direction in directions:
+        if direction == "straight":
+            parsed_directions.extend([0,1,2,3])
+        if direction == "diagonal": parsed_directions.extend([4,5,6,7])
+        if type(direction) == int: parsed_directions.append(direction)
+    return parsed_directions

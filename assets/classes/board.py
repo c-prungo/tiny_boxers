@@ -1,5 +1,5 @@
 # NOTE: External imports
-from typing import List
+from typing import List, Dict
 from json import load
 from copy import deepcopy
 from pprint import pprint
@@ -53,7 +53,19 @@ class Board:
             if self.is_legal_pos(pos):
                 self.boxers.append(new_boxer)
 
+    def get_actions(self) -> List[List[Action]]:
+
+        actions = []
+        for i, boxer in enumerate(self.boxers):
+            boxer_actions = boxer.get_actions(i)
+            for j, action in enumerate(boxer_actions):
+                if j >= len(actions): actions.append([])
+                actions[j].append(action)
+
+        return actions
+
     def take_actions(self, *player_actions: Action):
+        """attempt to take simultaneous actions"""
 
         # order is important as it determines order of resolution
         type_list = [
@@ -76,6 +88,8 @@ class Board:
             if check == True:
                 self.boxers = new_board.boxers
 
+        self.round_reset()
+
     def take_action(self, key: str, idx: int, type: str, dir: Direction) -> bool:
 
         type_dict = {
@@ -88,64 +102,55 @@ class Board:
             action = deepcopy(actions[type])
 
             del action['type']
+            if 'directions' in action: del action['directions']
 
-            if not all(self.check_directions(dir, directions=action['directions'])): return False
-            del action['directions']
-
-            return type_dict[key](idx, dir, **action)
+            if dir: action['dir'] = dir
+            return type_dict[key](idx, **action)
 
         except Exception as e:
             logger.exception(str(e))
             return False
 
     # Minor
-    def move_boxer(self, idx: int, dir: Direction, distance: int=1) -> bool:
+    def move_boxer(self, idx: int, dir: Direction, distance: int=1, **special) -> bool:
         """move a boxer in a single direction with a given range (only makes legal moves)"""
 
         new_pos = self.boxers[idx].get_relative_pos(dir, distance)
         if self.is_legal_pos(new_pos):
-            self.boxers[idx].move(new_pos)
+            self.boxers[idx].move(new_pos, **special)
             return True
 
         return False
 
-    def boxer_block() -> bool:
+    def boxer_block(self, idx: int, value: int, **special) -> bool:
+        """add block to the boxer at a given idx"""
+        self.boxers[idx].block(value, **special)
         return True
 
-    def boxer_attack(self, idx: int, dir: Direction, damage: int, distance: int) -> bool:
-
+    def boxer_attack(self, idx: int, dir: Direction, value: int, distance: int, **special) -> bool:
+        """make the given boxer idx make an attack against a relative position"""
         new_pos = self.boxers[idx].get_relative_pos(dir, distance)
         for boxer in self.boxers:
-            if boxer.pos == new_pos: boxer.damage(damage)
+            if boxer.pos == new_pos: boxer.damage(value, **special)
 
         return True
 
     # Helper
-    def check_directions(self, *dirs: Direction, directions: List[int]) -> bool:
-        """check if a list of directions are legal directions"""
+    def round_reset(self):
+        for boxer in self.boxers:
+            boxer.round_reset()
 
-        parsed_directions = []
-        for direction in directions:
-            if direction == "straight":
-                parsed_directions.extend([0,1,2,3])
-            if direction == "diagonal": parsed_directions.extend([4,5,6,7])
-            if type(direction) == int: parsed_directions.append(direction)
+    def full_reset(self):
+        for boxer in self.boxers:
+            boxer.full_reset()
 
-        valid_dirs = []
-        for i, dir_enum in enumerate(Direction):
-            if i in parsed_directions: valid_dirs.append(dir_enum)
-
-        results = []
-        for dir in dirs:
-            results.append(bool(dir in valid_dirs))
-        return results
-
-    def is_legal_pos(self, pos: Position) -> bool:
+    def is_legal_pos(self, pos: Position) -> List[bool]:
         """check if a position exists on the board"""
-        if (self.is_within_board(pos)
-        and self.is_tile(pos, 'f')
-        and self.is_free_tile(pos)): return True
-        return False
+        return bool(
+            self.is_within_board(pos)
+            and self.is_tile(pos, 'f')
+            and self.is_free_tile(pos)
+        )
 
     def is_within_board(self, pos: Position) -> bool:
         """check if a position exists within the bounds of the board"""
@@ -170,7 +175,7 @@ class Board:
     def is_free_tile(self, pos: Position) -> bool:
         """check if a given position contains another boxer"""
         try:
-            return False if not all([boxer.pos != pos for boxer in self.boxers]) else True
+            return all([boxer.pos != pos for boxer in self.boxers])
         except Exception as e:
             logger.exception('Failed is_free_tile check: ' + str(e))
             return False

@@ -7,30 +7,35 @@
     "jab": {
         "type": "attack",
         "distance": 2,
-        "damage": 2,
+        "value": 2,
         "directions": ["straight"]
     },
     "cross": {
         "type": "attack",
         "distance": 1,
-        "damage": 3,
+        "value": 3,
         "directions": ["straight"]
     },
     "hook": {
         "type": "attack",
         "distance": 1,
-        "damage": 2,
+        "value": 2,
         "directions": ["diagonal"]
     },
     "uppercut": {
         "type": "attack",
         "distance": 1,
-        "damage": 2,
+        "value": 2,
         "directions": ["straight"],
-        "special": [
-            "ignorecounter"
-        ]
+        "ignorecounter": true
     },
-    "guard": 1,
-    "counter": 1
+    "guard": {
+        "type": "block",
+        "value": 100
+    },
+    "counter": {
+        "type": "block",
+        "value": 1,
+        "extra_action": 1
+    }
 }
